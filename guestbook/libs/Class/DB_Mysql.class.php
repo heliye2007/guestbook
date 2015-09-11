@@ -7,7 +7,6 @@
 defined('IN_APP') or exit('Denied Access!');
 
 class DB_Mysql implements DBInterface {
-
 	private static $instanceObj;
 	private $config = array();
 
@@ -35,6 +34,13 @@ class DB_Mysql implements DBInterface {
 	public function query($sql) {
 		return mysql_query($sql);
 	}
+/*
+mysql_fetch_array(data,array_type)
+MYSQL_ASSOC - 关联数组
+MYSQL_NUM - 数字数组
+MYSQL_BOTH - 默认。同时产生关联和数字数组
+LIMIT {$num}表示从第num+1条开始
+*/
 
 	public function select($sql, $num=0, $mode=1) {
 		if ($num) $sql .= " LIMIT {$num}";
@@ -50,6 +56,8 @@ class DB_Mysql implements DBInterface {
 		$rs = $this->select($sql, 1, $mode);
 		return isset($rs[0])? $rs[0] : false;
 	}
+
+	//mysql_insert_id() 函数返回上一步 INSERT 操作产生的 ID
 
 	public function getInsertId() {
 		return mysql_insert_id();

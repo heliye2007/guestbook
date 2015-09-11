@@ -1,5 +1,5 @@
 window.onload = function() {
-	
+
 	var oUser = document.getElementById('user');
 	var oReg = document.getElementById('reg');
 	var oLogin = document.getElementById('login');
@@ -11,6 +11,7 @@ window.onload = function() {
 	
 	var oUsername1 = document.getElementById('username1');
 	var oVerifyUserNameMsg = document.getElementById('verifyUserNameMsg');
+    var b = true;
 	
 	//初始化
 	updateUserStatus();
@@ -49,7 +50,7 @@ window.onload = function() {
 	*/
 	oUsername1.onblur = function() {
 		ajax('get', 'guestbook/index.php', 'm=index&a=verifyUserName&username=' + this.value, function(data) {
-			//alert(data);
+
 			var d = JSON.parse(data);
 			
 			oVerifyUserNameMsg.innerHTML = d.message;
@@ -83,6 +84,8 @@ window.onload = function() {
 		ajax('post', 'guestbook/index.php', 'm=index&a=reg&username='+encodeURI(oUsername1.value)+'&password=' + oPassword1.value, function(data) {
 			var d = JSON.parse(data);
 			alert(d.message);
+            oPassword1.value="";
+            oUsername1.value="";
 			
 		});
 		
@@ -178,7 +181,6 @@ window.onload = function() {
 	oPostBtn.onclick = function() {
 		
 		ajax('post', 'guestbook/index.php', 'm=index&a=send&content='+encodeURI(oContent.value), function(data) {
-			
 			var d = JSON.parse(data);
 			alert(d.message);
 			
@@ -205,14 +207,33 @@ window.onload = function() {
 		var oDd2 = document.createElement('dd');
 		oDd2.className = 't';
 		var oA1 = document.createElement('a');
-		oA1.href = '';
+
+        var up;
+        var down;
+		oA1.href = '#';
+        oA1.onclick=function(){
+            ajax('get', 'guestbook/index.php', 'm=index&a=doSupport&cid='+data.cid, function(data){
+
+                var d = JSON.parse(data);
+
+            oA1.innerHTML = '顶(<span>'+d.support+'</span>)';
+            alert(d.message);
+            })
+        }
 		oA1.innerHTML = '顶(<span>'+data.support+'</span>)';
 		var oA2 = document.createElement('a');
-		oA2.href = '';
+        oA2.href = '#';
+        oA2.onclick=function(){
+            ajax('get', 'guestbook/index.php', 'm=index&a=doOppose&cid='+data.cid, function(data){
+            var d = JSON.parse(data);
+            oA2.innerHTML='踩(<span>'+d.oppose+'</span>)';
+            alert(d.message);
+        })
+        }
 		oA2.innerHTML = '踩(<span>'+data.oppose+'</span>)';
 		oDd2.appendChild(oA1);
 		oDd2.appendChild(oA2);
-		
+
 		oDl.appendChild(oDt);
 		oDl.appendChild(oDd1);
 		oDl.appendChild(oDd2);
@@ -255,25 +276,84 @@ window.onload = function() {
 					message : 返回的信息 具体返回信息
 				}
 		*/
-		ajax('get', 'guestbook/index.php', 'm=index&a=getList&n=2&page=' + iPage, function(data) {
-			
-			var d = JSON.parse(data);
-			
+		ajax('get', 'guestbook/index.php', 'm=index&a=getList&n=5&page=' + iPage, function(data) {
+            var d = JSON.parse(data);
+
 			var data = d.data;
-			
+
 			if (data) {
+
 				for (var i=0; i<data.list.length; i++) {
 					createList(data.list[i]);
 				}
+                oShowMore.innerHTML = '显示更多';
+                if (data.list.length==0)
+                {oShowMore.innerHTML="没有更多数据了";
+                    oShowMore.onclick=null;}
 			} else {
+
 				if (iPage == 1) {
+                    oShowMore.style.display = 'none';
 					oList.innerHTML = '现在还没有留言，快来抢沙发...';
 				}
-				oShowMore.style.display = 'none';
+
 			}
-			
+
+            b = true;
 		});
+
 	}
+    //滚动加载
+    window.onscroll = function() {
+
+        var scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+
+        if ( getTop(oList) + oList.offsetHeight < document.documentElement.clientHeight + scrollTop ) {
+
+            if ( b ) {
+                b = false;
+                iPage++;
+                showList();
+            }
+
+        }
+
+    }
+    function getTop(obj) {
+        var iTop = 0;
+        while(obj) {
+            iTop += obj.offsetTop;
+            obj = obj.offsetParent;
+        }
+        return iTop;
+    }
+    /*
+    顶
+     post
+     guestbook/index.php
+     m : index
+     a : send
+     cid : 留言内容
+     返回
+     {
+     code : 返回的信息代码 0 = 没有错误，1 = 有错误
+
+     message : 返回的信息 具体返回信息
+     }
+     */
+    function up(){
+        ajax('get', 'guestbook/index.php', 'm=index&a=doSupport&cid=3', function(data){
+            var d = JSON.parse(data);
+            alert(data);
+        })
+        return false;
+    }
+//踩
+    function down(){
+        alert("123");
+        return false;
+    }
+
 }
 
 function getCookie(key) {
@@ -284,4 +364,13 @@ function getCookie(key) {
 			return arr2[1];
 		}
 	}
+}
+function bind(obj, evname, fn) {
+    if (obj.addEventListener) {
+        obj.addEventListener(evname, fn, false);
+    } else {
+        obj.attachEvent('on' + evname, function() {
+            fn.call(obj);
+        });
+    }
 }

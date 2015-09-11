@@ -45,12 +45,12 @@ class IndexController extends Controller {
 		$password = trim(isset($_REQUEST['password']) ? $_REQUEST['password'] : '');
 		$avatar = trim(isset($_REQUEST['avatar']) && in_array($_REQUEST['avatar'], array(1,2,3,4,5,6,7,8,9)) ? intval($_REQUEST['avatar']) : 1);
 
-		if ($this->_verifyUserName($username) !== 0 || strlen($password)<3 || strlen($password) > 20) {
+		if ($this->h($username) !== 0 || strlen($password)<3 || strlen($password) > 20) {
 			$this->sendByAjax(array('code'=>1,'message'=>'注册失败！'));
 		}
 		$password = md5($password);
 		if (false === $this->db->query("INSERT INTO `users` (`username`, `password`, `avatar`) VALUES ('{$username}', '{$password}', {$avatar})")) {
-			$this->sendByAjax(array('code'=>1,'message'=>'注册失败！'));
+			$this->sendByAjax(array('code'=>1,'message'=>'注册失败'));
 		} else {
 			$this->sendByAjax(array('message'=>'注册成功！'));
 		}
@@ -131,7 +131,9 @@ class IndexController extends Controller {
 			$content = $this->db->get("SELECT cid FROM `contents` WHERE `cid`={$cid}");
 			if (!$content) $this->sendByAjax(array('code'=>1,'message'=>'不存在的留言cid！'));
 			$this->db->query("UPDATE `contents` SET `support`=support+1 WHERE `cid`={$cid}");
-			$this->sendByAjax(array('code'=>0,'message'=>'顶成功！'));
+			$support=$this->db->get("SELECT support FROM `contents` WHERE `cid`={$cid}");
+			//$this->db->query("SELECT * from `contents` order by `support` DESC");
+			$this->sendByAjax(array('code'=>0,'message'=>'顶成功！','support'=>$support['support']));
 		}
 	}
 
@@ -147,7 +149,8 @@ class IndexController extends Controller {
 			$content = $this->db->get("SELECT cid FROM `contents` WHERE `cid`={$cid}");
 			if (!$content) $this->sendByAjax(array('code'=>1,'message'=>'不存在的留言cid！'));
 			$this->db->query("UPDATE `contents` SET `oppose`=oppose+1 WHERE `cid`={$cid}");
-			$this->sendByAjax(array('code'=>0,'message'=>'踩成功！'));
+			$oppose=$this->db->get("SELECT oppose FROM `contents` WHERE `cid`={$cid}");
+			$this->sendByAjax(array('code'=>0,'message'=>'踩成功！','oppose'=>$oppose['oppose']));
 		}
 	}
 
@@ -165,10 +168,9 @@ class IndexController extends Controller {
 		}
 		$pages = ceil($count / $n);
 		if ($page > $pages) {
-			$this->sendByAjax(array('code'=>2,'message'=>'没有数据了！'));
 		}
 		$start = ( $page - 1 ) * $n;
-		$result = $this->db->select("SELECT c.cid,c.uid,u.username,c.content,c.dateline,c.support,c.oppose FROM `contents` as c, `users` as u WHERE u.uid=c.uid ORDER BY c.cid DESC LIMIT {$start},{$n}");
+		$result = $this->db->select("SELECT c.cid,c.uid,u.username,c.content,c.dateline,c.support,c.oppose FROM `contents` as c, `users` as u WHERE u.uid=c.uid ORDER BY c.support DESC LIMIT {$start},{$n}");
 		$data = array(
 			'count'	=>	$count,
 			'pages'	=>	$pages,
