@@ -45,7 +45,7 @@ class IndexController extends Controller {
 		$password = trim(isset($_REQUEST['password']) ? $_REQUEST['password'] : '');
 		$avatar = trim(isset($_REQUEST['avatar']) && in_array($_REQUEST['avatar'], array(1,2,3,4,5,6,7,8,9)) ? intval($_REQUEST['avatar']) : 1);
 
-		if ($this->h($username) !== 0 || strlen($password)<3 || strlen($password) > 20) {
+		if ($this->_verifyUserName($username) !== 0 || strlen($password)<3 || strlen($password) > 20) {
 			$this->sendByAjax(array('code'=>1,'message'=>'注册失败！'));
 		}
 		$password = md5($password);
